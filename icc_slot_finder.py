@@ -365,10 +365,10 @@ class ICCSlotFinder:
 				else:
 					selected_store = address
 
-				if any( ('DE ANZA' in selected_store, 'SAN JOSE' in selected_store) ):
-					store = 'SAN JOSE'
-				else:
-					store = selected_store
+			if any( ('DE ANZA' in selected_store, 'SAN JOSE' in selected_store) ):
+				store = 'SAN JOSE'
+			else:
+				store = selected_store
 
 				print("Attempting to find slot for Store : {}".format(selected_store))
 
