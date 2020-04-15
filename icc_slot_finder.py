@@ -213,12 +213,12 @@ class ICCSlotFinder:
 	def __switch_store__(self, new_zip):
 		url = "https://www.indiacashandcarry.com/"
 		self.browser.get(url)
-
-		self.browser.refresh()
 		time.sleep(3)
 
 		self.browser.find_element_by_class_name('header-location').click()
-		time.sleep(2)
+		time.sleep(0.5)
+		self.browser.refresh()
+		time.sleep(1)
 
 		try:
 			xpath = '//*[@id="price-list-0"]/p/a'
@@ -253,9 +253,7 @@ class ICCSlotFinder:
 		except Exception as err:
 			pass
 
-
-		self.browser.save_screenshot("switch_store.png")
-		raise Exception("RUNTIME ERROR IN SWITCH STORE")
+		return False
 
 
 	@timeout.custom_decorator
@@ -373,7 +371,8 @@ class ICCSlotFinder:
 				print("Attempting to find slot for Store : {}".format(selected_store))
 
 				if not self.firstInstance :
-					self.__switch_store__(zp)
+					if not self.__switch_store__(zp):
+						raise Exception("RUNTIME ERR IN SWITCH STORE")
 				else:
 					self.firstInstance = False
 
@@ -465,8 +464,8 @@ if __name__ == '__main__':
 		slot_finder.log_msg('Starting new loop')
 		try:
 			slot_finder.find_slots()
-		except RuntimeError:
-			self.close_connection()
+		except Exception:
+			slot_finder.close_connection()
 			slot_finder.log_msg('\nCreating new instance..\n')
 			slot_finder = ICCSlotFinder()
 			slot_finder.start_browser()
