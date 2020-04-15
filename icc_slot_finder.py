@@ -335,7 +335,7 @@ class ICCSlotFinder:
 
 			if any( ('DE ANZA' in selected_store, 'SAN JOSE' in selected_store) ):
 				store = 'SAN JOSE'
-			elif 'FREMONT' in selected_store:
+			else:
 				store = selected_store
 
 			print("\nAttempting to find slot for Store : {}".format(selected_store))
