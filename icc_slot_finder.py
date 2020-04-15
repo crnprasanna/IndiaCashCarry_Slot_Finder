@@ -18,7 +18,6 @@ class ICCSlotFinder:
 		self.url = "https://www.indiacashandcarry.com/login"
 
 		self.browser = None
-		self.server = None
 		self.default_zip = '94040'
 		self.slots_result = ''
 		self.addr_list = []
@@ -28,7 +27,6 @@ class ICCSlotFinder:
 		self.icc_to_check = settings.ICC_STORES_TO_CHECK.upper()
 		self.icc_option = settings.ICC_STATUS_TO_CHECK.upper()
 
-		self.server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
 		self.supported_store_list = [ 'SUNNYVALE', 'SAN JOSE', 'FREMONT', 'ALL' ]
 
 		self.logger = Logger()
@@ -145,11 +143,13 @@ class ICCSlotFinder:
 
 		msg['From'] = settings.SENDER_GMAIL_ID
 		msg['To'] = settings.RECEIVER_EMAIL_ID
+		server = None
 
 		try:
-			self.server.login(settings.SENDER_GMAIL_ID,
+			server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+			server.login(settings.SENDER_GMAIL_ID,
 							  settings.SENDER_GMAIL_PASS)
-			self.server.sendmail(settings.SENDER_GMAIL_ID,
+			server.sendmail(settings.SENDER_GMAIL_ID,
 								 settings.RECEIVER_EMAIL_ID,
 								 msg.as_string())
 			self.log_msg("Email notification succesfully sent")
@@ -158,6 +158,12 @@ class ICCSlotFinder:
 				err))
 			self.log_msg('Continuing finding slots.. check status from \
 			console logs...')
+
+		try:
+			if server:
+				server.quit()
+		except Exception:
+			pass
 
 
 	@timeout.custom_decorator
@@ -207,6 +213,8 @@ class ICCSlotFinder:
 	def __switch_store__(self, new_zip):
 		url = "https://www.indiacashandcarry.com/"
 		self.browser.get(url)
+
+		self.browser.refresh()
 		time.sleep(3)
 
 		self.browser.find_element_by_class_name('header-location').click()
@@ -215,31 +223,54 @@ class ICCSlotFinder:
 		try:
 			xpath = '//*[@id="price-list-0"]/p/a'
 			self.browser.find_element_by_xpath(xpath).click()
-			time.sleep(1)
-		except Exception:
-			try:
-				xpath = '//*[@id="price-list-1"]/p/a'
-				self.browser.find_element_by_xpath(xpath).click()
-				time.sleep(1)
-			except Exception:
-				xpath = '//*[@id="price-list-2"]/p/a'
-				self.browser.find_element_by_xpath(xpath).click()
-				time.sleep(1)				
 
-		time.sleep(2)
-		self.__pass_zip__(new_zip)
+			time.sleep(2)
+			self.__pass_zip__(new_zip)
+			return True
+
+		except Exception:
+			pass
+
+
+		try:
+			xpath = '//*[@id="price-list-1"]/p/a'
+			self.browser.find_element_by_xpath(xpath).click()
+
+			time.sleep(2)
+			self.__pass_zip__(new_zip)
+			return True
+		except Exception:
+			pass
+
+
+		try:
+			xpath = '//*[@id="price-list-2"]/p/a'
+			self.browser.find_element_by_xpath(xpath).click()
+
+			time.sleep(2)
+			self.__pass_zip__(new_zip)
+			return True
+		except Exception as err:
+			pass
+
+
+		self.browser.save_screenshot("switch_store.png")
+		raise Exception("RUNTIME ERROR IN SWITCH STORE")
 
 
 	@timeout.custom_decorator
 	def __select_store__(self):
-		
-		time.sleep(2)
-		self.browser.find_element_by_link_text("Select This Location").click()
-		time.sleep(2)
-		
-		xpath = '//*[@id="price-list-0"]/ul/li[1]/p'
-		self.browser.find_element_by_xpath(xpath).click()
-		time.sleep(2)
+		try:
+			time.sleep(2)
+			self.browser.find_element_by_link_text("Select This Location").click()
+			time.sleep(2)
+
+			xpath = '//*[@id="price-list-0"]/ul/li[1]/p'
+			self.browser.find_element_by_xpath(xpath).click()
+			time.sleep(2)
+		except Exception as err:
+			self.browser.save_screenshot("sel_store.png")
+			raise Exception(err)
 
 	@timeout.custom_decorator
 	def __check_pickup_slot__(self):
@@ -326,41 +357,44 @@ class ICCSlotFinder:
 
 	@timeout.custom_decorator
 	def find_slots(self):
-		for (zp, address) in self.addr_list:
+		try:
+			for (zp, address) in self.addr_list:
 
-			if self.icc_to_check == "ALL":
-				selected_store = address[:address.index(' Select')]
-			else:
-				selected_store = address
+				if self.icc_to_check == "ALL":
+					selected_store = address[:address.index(' Select')]
+				else:
+					selected_store = address
 
-			if any( ('DE ANZA' in selected_store, 'SAN JOSE' in selected_store) ):
-				store = 'SAN JOSE'
-			elif 'FREMONT' in selected_store:
-				store = selected_store
+				if any( ('DE ANZA' in selected_store, 'SAN JOSE' in selected_store) ):
+					store = 'SAN JOSE'
+				else:
+					store = selected_store
 
-			print("\nAttempting to find slot for Store : {}".format(selected_store))
+				print("Attempting to find slot for Store : {}".format(selected_store))
 
-			if not self.firstInstance :
-				self.__switch_store__(zp)
-			else:
-				self.firstInstance = False
-			
-			self.__select_store__()
-			url = 'https://www.indiacashandcarry.com/cart/checkout'
-			self.browser.get(url)
-			time.sleep(5)
+				if not self.firstInstance :
+					self.__switch_store__(zp)
+				else:
+					self.firstInstance = False
 
-			self.__is_cart_empty__()
-			
-			if any ( (self.icc_option == "BOTH", self.icc_option == "DELIVERY" )):
-				self.delivery_status[store] = False
-				status = self.__check_delivery_slot__()
-				self.delivery_status[store] = status
+				self.__select_store__()
+				url = 'https://www.indiacashandcarry.com/cart/checkout'
+				self.browser.get(url)
+				time.sleep(5)
 
-			if any ( (self.icc_option == "BOTH", self.icc_option == "PICKUP" )):
-				self.pickup_status[store] = False
-				status = self.__check_pickup_slot__()
-				self.pickup_status[store] = status
+				self.__is_cart_empty__()
+
+				if any ( (self.icc_option == "BOTH", self.icc_option == "DELIVERY" )):
+					self.delivery_status[store] = False
+					status = self.__check_delivery_slot__()
+					self.delivery_status[store] = status
+
+				if any ( (self.icc_option == "BOTH", self.icc_option == "PICKUP" )):
+					self.pickup_status[store] = False
+					status = self.__check_pickup_slot__()
+					self.pickup_status[store] = status
+		except Exception as err:
+			raise Exception(err)
 
 
 	@timeout.custom_decorator
@@ -368,9 +402,12 @@ class ICCSlotFinder:
 		is_slot_found = False
 		self.slots_result = ''
 
+		self.log_msg("\nSlot status:")
+		self.slots_result += "\nSlot Status:\n"
+
 		for (store, status) in self.delivery_status.items():
-			self.log_msg("{} Delivery Slot : {}".format(store, status))
-			self.slots_result += "{} Delivery Slot : {}\n".format(store, status)
+			self.log_msg("\t{} Delivery Slot : {}".format(store, status))
+			self.slots_result += "\t{} Delivery Slot : {}\n".format(store, status)
 
 			if status:
 				is_slot_found = True
@@ -378,12 +415,14 @@ class ICCSlotFinder:
 		self.slots_result += "\n"
 
 		for (store, status) in self.pickup_status.items():
-			self.log_msg("{} Pickup Slot : {}".format(store, status))
-			self.slots_result += "{} PickUp Slot : {}\n".format(store, status)
+			self.log_msg("\t{} Pickup Slot : {}".format(store, status))
+			self.slots_result += "\t{} PickUp Slot : {}\n".format(store, status)
 
 			if status:
 				is_slot_found = True
 
+		self.log_msg("\n")
+		self.slots_result += "\n"
 		return is_slot_found
 
 
@@ -400,12 +439,6 @@ class ICCSlotFinder:
 		if self.browser:
 			self.browser.quit()
 			self.log_msg('Connection ended')
-
-		if self.server:
-			try:
-				self.server.quit()
-			except Exception:
-				pass
 
 		self.log_msg('\n##########################################')
 
