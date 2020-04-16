@@ -434,8 +434,8 @@ class ICCSlotFinder:
 		if self.browser:
 			self.browser.quit()
 			self.log_msg('Connection ended')
-
-		self.log_msg('\n##########################################')
+			self.browser = None
+			self.log_msg('\n##########################################')
 
 
 
@@ -453,11 +453,11 @@ if __name__ == '__main__':
 	slot_finder = ICCSlotFinder()
 	slot_finder.start_browser()
 
-	INTERVAL_BETWEEN_LOOPS = 6  # sec
+	INTERVAL_BETWEEN_LOOPS = 60 # sec
 
 	while True:
 
-		slot_finder.log_msg('Starting new loop')
+		slot_finder.log_msg('\nStarting new loop')
 		try:
 			slot_finder.find_slots()
 		except Exception:
