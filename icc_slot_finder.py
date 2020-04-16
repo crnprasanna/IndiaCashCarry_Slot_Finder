@@ -94,7 +94,6 @@ class ICCSlotFinder:
 		capabilities['acceptInsecureCerts'] = True
 
 		self.browser = webdriver.Chrome(executable_path=settings.CHROME_DRIVER_PATH, chrome_options=options, desired_capabilities=capabilities)
-		#self.browser = webdriver.Chrome(executable_path=settings.CHROME_DRIVER_PATH)
 
 		self.browser.delete_all_cookies()
 		self.browser.get(self.url)
@@ -127,6 +126,12 @@ class ICCSlotFinder:
 		except:
 			pass
 
+		try:
+			xpath = '//*[@id="email-error"]'
+			status = self.browser.find_element_by_xpath(xpath).text
+			raise Exception(status)
+		except:
+			pass
 
 	def log_msg(self, msg):
 		self.logger.log(msg)
