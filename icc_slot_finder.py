@@ -471,7 +471,9 @@ if __name__ == '__main__':
 			slot_finder.find_slots()
 		except Exception:
 			slot_finder.close_connection()
-			slot_finder.log_msg('\nCreating new instance..\n')
+			time.sleep(INTERVAL_BETWEEN_LOOPS)
+
+			slot_finder.log_msg('\nRUNTIME ERR HANDLED, Creating new instance..\n')
 			slot_finder = ICCSlotFinder()
 			slot_finder.start_browser(printCFG=False)
 			continue
