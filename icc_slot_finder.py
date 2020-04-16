@@ -41,18 +41,19 @@ class ICCSlotFinder:
 		sys.exit(0)
 
 	@timeout.custom_decorator
-	def start_browser(self):
-		self.log_msg('\n##########################################')
-		self.log_msg('Input Config:')
-		self.log_msg('\tChrome driver path: {}'.format(
-			settings.CHROME_DRIVER_PATH))
-		self.log_msg('\tStores List: {}'.format(self.icc_to_check))
-		self.log_msg('\tPickup/Delivery: {}'.format(self.icc_option))
-		self.log_msg('\tICC Login: {}'.format(
-			settings.ICC_LOGIN_EMAIL))
-		self.log_msg('\tSEND_EMAIL report: {}'.format(
-			settings.SEND_EMAIL))
-		self.log_msg('\n##########################################')
+	def start_browser(self, printCFG=True):
+		if printCFG:
+			self.log_msg('\n##########################################')
+			self.log_msg('Input Config:')
+			self.log_msg('\tChrome driver path: {}'.format(
+				settings.CHROME_DRIVER_PATH))
+			self.log_msg('\tStores List: {}'.format(self.icc_to_check))
+			self.log_msg('\tPickup/Delivery: {}'.format(self.icc_option))
+			self.log_msg('\tICC Login: {}'.format(
+				settings.ICC_LOGIN_EMAIL))
+			self.log_msg('\tSEND_EMAIL report: {}'.format(
+				settings.SEND_EMAIL))
+			self.log_msg('\n##########################################')
 
 		try:
 			self.__validate_store__()
@@ -264,7 +265,6 @@ class ICCSlotFinder:
 			self.browser.find_element_by_xpath(xpath).click()
 			time.sleep(2)
 		except Exception as err:
-			self.browser.save_screenshot("sel_store.png")
 			raise Exception(err)
 
 	@timeout.custom_decorator
@@ -464,7 +464,7 @@ if __name__ == '__main__':
 			slot_finder.close_connection()
 			slot_finder.log_msg('\nCreating new instance..\n')
 			slot_finder = ICCSlotFinder()
-			slot_finder.start_browser()
+			slot_finder.start_browser(printCFG=False)
 			continue
 
 		if slot_finder.chk_slot_status():
