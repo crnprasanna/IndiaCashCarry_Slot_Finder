@@ -122,15 +122,19 @@ class ICCSlotFinder:
 			xpath = '/html/body/div[2]/div/div/div/div/div/div/div/form/div[3]/div'
 			status = self.browser.find_element_by_xpath(xpath).text
 			if 'Incorrect username' in status:
-				raise Exception("Check ICC store username/password")
-		except:
+				self.log_msg('LOGIN ERROR, CHECK CREDENTIALS')
+				self.close_connection()
+				sys.exit(0)
+		except Exception:
 			pass
 
 		try:
 			xpath = '//*[@id="email-error"]'
 			status = self.browser.find_element_by_xpath(xpath).text
-			raise Exception(status)
-		except:
+			self.log_msg('LOGIN ERROR, CHECK EMAIL ID')
+			self.close_connection()
+			sys.exit(0)
+		except Exception:
 			pass
 
 	def log_msg(self, msg):
