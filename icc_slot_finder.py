@@ -65,7 +65,6 @@ class ICCSlotFinder:
 		self.log_msg('Attempting to login...')
 		try:
 			self.__login_icc_account__()
-			self.__find_actual_icc_list__()
 		except Exception as err:
 			self.log_msg('LOGIN ERROR, CHECK CREDENTIALS, err: {}\n'.format(
 				err))
@@ -85,7 +84,7 @@ class ICCSlotFinder:
 		options = webdriver.ChromeOptions()
 		options.add_argument('--headless')
 		options.add_argument('log-level=3')
-		options.add_argument('--window-size=1920x1080')
+		options.add_argument('window-size=1920,1080')
 		options.add_argument('--no-sandbox')
 		options.add_argument('--single-process')
 
@@ -199,12 +198,12 @@ class ICCSlotFinder:
 			except timeout_decorator.TimeoutError:
 				self.log_msg("TIMEOUT ERROR WITH FIND ICC STORE LIST")
 				self.close_connection()
-				raise RuntimeError("Restart program")
+				raise Exception("Restart program - Timeout ERR")
 			except Exception as err:
 				self.log_msg('RUNTIME ERROR WITH ICC STORE LIST, \
 				Err: {}'.format(err))
 				self.close_connection()
-				raise RuntimeError("Restart program")
+				raise Exception("Restart program")
 		else:
 			self.addr_list = [(store_map[self.icc_to_check], self.icc_to_check)]
 
@@ -216,8 +215,6 @@ class ICCSlotFinder:
 		time.sleep(3)
 
 		self.browser.find_element_by_class_name('header-location').click()
-		time.sleep(0.5)
-		self.browser.refresh()
 		time.sleep(1)
 
 		try:
@@ -355,45 +352,44 @@ class ICCSlotFinder:
 
 	@timeout.custom_decorator
 	def find_slots(self):
-		try:
-			for (zp, address) in self.addr_list:
+		self.__find_actual_icc_list__()
 
-				if self.icc_to_check == "ALL":
-					selected_store = address[:address.index(' Select')]
-				else:
-					selected_store = address
+		for (zp, address) in self.addr_list:
+			if self.icc_to_check == "ALL":
+				selected_store = address[:address.index(' Select')]
+			else:
+				selected_store = address
 
 			if any( ('DE ANZA' in selected_store, 'SAN JOSE' in selected_store) ):
 				store = 'SAN JOSE'
 			else:
 				store = selected_store
 
-				print("Attempting to find slot for Store : {}".format(selected_store))
+			self.log_msg("Attempting to find slot for Store : {}".format(selected_store))
 
-				if not self.firstInstance :
-					if not self.__switch_store__(zp):
-						raise Exception("RUNTIME ERR IN SWITCH STORE")
-				else:
-					self.firstInstance = False
+			if not self.firstInstance :
+				if not self.__switch_store__(zp):
+					raise Exception("RUNTIME ERR IN SWITCH STORE")
+			else:
+				self.firstInstance = False
 
-				self.__select_store__()
-				url = 'https://www.indiacashandcarry.com/cart/checkout'
-				self.browser.get(url)
-				time.sleep(5)
+			self.__select_store__()
+			url = 'https://www.indiacashandcarry.com/cart/checkout'
+			self.browser.get(url)
+			time.sleep(5)
 
-				self.__is_cart_empty__()
+			self.__is_cart_empty__()
 
-				if any ( (self.icc_option == "BOTH", self.icc_option == "DELIVERY" )):
-					self.delivery_status[store] = False
-					status = self.__check_delivery_slot__()
-					self.delivery_status[store] = status
+			if any ( (self.icc_option == "BOTH", self.icc_option == "DELIVERY" )):
+				self.delivery_status[store] = False
+				status = self.__check_delivery_slot__()
+				self.delivery_status[store] = status
 
-				if any ( (self.icc_option == "BOTH", self.icc_option == "PICKUP" )):
-					self.pickup_status[store] = False
-					status = self.__check_pickup_slot__()
-					self.pickup_status[store] = status
-		except Exception as err:
-			raise Exception(err)
+			if any ( (self.icc_option == "BOTH", self.icc_option == "PICKUP" )):
+				self.pickup_status[store] = False
+				status = self.__check_pickup_slot__()
+				self.pickup_status[store] = status
+
 
 
 	@timeout.custom_decorator
