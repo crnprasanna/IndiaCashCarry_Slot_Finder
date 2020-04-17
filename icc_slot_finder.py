@@ -441,6 +441,7 @@ class ICCSlotFinder:
 
 	def close_connection(self):
 		if self.browser:
+			self.chk_slot_status()
 			self.browser.quit()
 			self.log_msg('Connection ended')
 			self.browser = None
