@@ -5,9 +5,11 @@
     Logger helper module
 '''
 
-import logging
-import os
-from datetime import datetime
+if __name__ != '__main__':
+	from helper.modules import *
+else:
+	from modules import *
+
 LOG_DIR_DEFAULT = 'logs/'
 
 

@@ -1,15 +1,8 @@
-#C:\\Users\\prasannan\\AppData\\Local\\lxss\\home\\nvidia
 
-#pip install selenium chromedriver
-#pip install pyvirtualdisplay
-#pip install xvfbwrapper
-
-from selenium import webdriver
-from selenium.webdriver import DesiredCapabilities
-import time
-from signal import signal, SIGINT
-from sys import exit
-
+if __name__ != '__main__':
+	from helper.modules import *
+else:
+	from modules import *
 
 
 class Browser():
@@ -193,7 +186,7 @@ if __name__ == "__main__":
 		msg = 'SIGINT or CTRL-C detected in main. Exiting gracefully'
 		slot_finder.log_msg(msg)
 		slot_finder.close()
-		exit(0)
+		sys.exit(0)
 
 	signal(SIGINT, handler)
 
