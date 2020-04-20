@@ -1,16 +1,12 @@
-from selenium import webdriver
-from selenium.webdriver import DesiredCapabilities
-from selenium.webdriver.common.keys import Keys
-import sys
-import time
-import settings
+
+from helper.modules import *
 from helper.logger import Logger
 from helper.browser import Browser
-import smtplib
-from email.mime.text import MIMEText
+from helper.sendemail import SendEmail
 from helper.timeout import custom_decorator
-from timeout_decorator import TimeoutError
-from signal import signal, SIGINT
+
+import settings
+
 
 
 class ICCSlotFinder:
@@ -34,6 +30,7 @@ class ICCSlotFinder:
 		signal(SIGINT, self.handler)
 
 		self.__validate_store__()
+		self.email = SendEmail(settings.SENDER_GMAIL_ID, settings.SENDER_GMAIL_PASS)
 
 		if printCFG:
 			self.log_msg('\n##########################################')
@@ -58,6 +55,11 @@ class ICCSlotFinder:
 
 	def get_url(self, url, delay=3):
 		self.browser.load_url(url, delay)
+
+
+	def send_notification(self, subject, body):
+		if settings.SEND_EMAIL and self.email:
+			self.email.send_email(settings.SENDER_GMAIL_ID, settings.RECEIVER_EMAIL_ID, subject, body)
 
 
 	@custom_decorator
@@ -121,42 +123,9 @@ class ICCSlotFinder:
 		except Exception:
 			pass
 
+
 	def log_msg(self, msg):
 		self.logger.log(msg)
-
-
-	@custom_decorator
-	def __send_email__(self, slot_found_flag):
-		msg = MIMEText(self.slots_result)
-		if slot_found_flag:
-			msg['Subject'] = 'ICC slot information : SLOT_FOUND'
-		else:
-			msg['Subject'] = \
-				'ICC slot information : SLOT_NOT_FOUND'
-
-		msg['From'] = settings.SENDER_GMAIL_ID
-		msg['To'] = settings.RECEIVER_EMAIL_ID
-		server = None
-
-		try:
-			server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-			server.login(settings.SENDER_GMAIL_ID,
-							  settings.SENDER_GMAIL_PASS)
-			server.sendmail(settings.SENDER_GMAIL_ID,
-								 settings.RECEIVER_EMAIL_ID,
-								 msg.as_string())
-			self.log_msg("Email notification succesfully sent")
-		except Exception as err:
-			self.log_msg('Exception with sending email, err : {}'.format(
-				err))
-			self.log_msg('Continuing finding slots.. check status from \
-			console logs...')
-
-		try:
-			if server:
-				server.quit()
-		except Exception:
-			pass
 
 
 	@custom_decorator
@@ -372,7 +341,6 @@ class ICCSlotFinder:
 				self.pickup_status[store] = status
 
 
-
 	@custom_decorator
 	def chk_slot_status(self):
 		is_slot_found = False
@@ -402,10 +370,6 @@ class ICCSlotFinder:
 		return is_slot_found
 
 
-	def send_email(self, slot_found_status):
-		if settings.SEND_EMAIL:
-			self.__send_email__(slot_found_status)
-
 	def refresh_browser(self):
 		if self.browser:
 			self.browser.refresh()
@@ -415,6 +379,7 @@ class ICCSlotFinder:
 		if self.browser:
 			self.chk_slot_status()
 			self.browser.close()
+			self.email = None
 			self.browser = None
 			self.log_msg('\n##########################################')
 
@@ -432,9 +397,13 @@ if __name__ == '__main__':
 	signal(SIGINT, handler)
 
 	slot_finder = ICCSlotFinder()
-	slot_finder.start(withHead=True)
+	slot_finder.start()
 
 	INTERVAL_BETWEEN_LOOPS = 60 # sec
+
+	heartbeat = datetime.now()
+	HEARTBEAT_PERIOD = (4*60) #mins
+
 
 	while True:
 
@@ -442,6 +411,12 @@ if __name__ == '__main__':
 		try:
 			slot_finder.find_slots()
 		except Exception:
+			ticks = (datetime.now() - heartbeat) / timedelta(minutes=HEARTBEAT_PERIOD)
+			if (ticks > 1):
+				slot_finder.log_msg('\nSending email in Heartbeat status..')
+				slot_finder.send_notification("ICC SLot Finder -Hearbeat status", "No Slot found")
+				heartbeat = datetime.now()
+
 			slot_finder.close()
 			time.sleep(INTERVAL_BETWEEN_LOOPS)
 
@@ -452,13 +427,21 @@ if __name__ == '__main__':
 
 		if slot_finder.chk_slot_status():
 			slot_finder.log_msg('\nSlot found...')
-			slot_finder.send_email(True)
+			
+			slot_finder.send_notification("ICC Slot Finder - SLOT FOUND", slot_finder.slots_result)
 			break
+
+		ticks = (datetime.now() - heartbeat) / timedelta(minutes=HEARTBEAT_PERIOD)
+		if (ticks > 1):
+			slot_finder.log_msg('\nSending email in Heartbeat status..')
+			slot_finder.send_notification("ICC Slot Finder - Hearbeat status", slot_finder.slots_result)
+			heartbeat = datetime.now()
+
 
 		url = "https://www.indiacashandcarry.com/"
 		slot_finder.get_url(url)
 
-		slot_finder.refresh_browser()
+		slot_finder.browser.refresh_browser()
 		time.sleep(INTERVAL_BETWEEN_LOOPS)
 
 	slot_finder.close()

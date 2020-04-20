@@ -5,10 +5,10 @@
     Timeout helper module
 '''
 
-from functools import wraps
-import sys
-import timeout_decorator
-import time
+if __name__ != '__main__':
+	from helper.modules import *
+else:
+	from modules import *
 
 # Timeout exception for linux only
 
