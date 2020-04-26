@@ -1,16 +1,23 @@
 # India Cash and Carry Slot Finder
 
-A Windows / Linux based python module to find India Cash and carry delivery/pickup slot finder. 
+A MACOS / Linux / WINDOWS based python module to find India Cash and carry delivery/pickup slot finder. 
 
 [India cash and carry](https://www.indiacashandcarry.com/) is the well known Indian grocery chain in SF Bay area 
 
 
 # Inspirations:
+
 Personally I was stuck with COVID-19 pandaemic at home for getting my day to day essentials and started looking online grocery delivery services. 
 
 One challange with those platforms is finding slots in my area due to surge in demand for those services and it's nearly impossible for me to get a slot. When checking with my friends and colleagues, I found most of us have the same problem. 	
 
 This tool was created to help people who are at high risk and those needy ones (including myself)
+	
+	
+# Updates:
+
+      [4/25] Now supports MACOS. You can use it on MAC / WIN 10 / Ubuntu
+	  
 	
 # Cloning repro
 
@@ -21,18 +28,23 @@ This tool was created to help people who are at high risk and those needy ones (
 
 # Installation:
 
-1. Windows:
+1. MACOS:
+	
+          ./install_mac.sh # under 'install/' directory
 
-        a. Python : v3 and above and python pip3
-        b. Latest google chrome and chromedriver corresponding to chrome version installed
-	  
+ 
 2. Ubuntu:
 	
           sudo ./install_ubuntu.sh # under 'install/' directory
           **Note : This tool will auto upgrade chrome to latest version, if not installed on the host pc already
 	
+3. Windows:
+
+        a. Python : v3 and above and python pip3
+        b. Latest google chrome and chromedriver corresponding to chrome version installed
+
   
-3. Installing python modules:
+# Installing python modules:
 
           pip3 install -r requirements.txt
 		  
@@ -118,7 +130,7 @@ This tool was created to help people who are at high risk and those needy ones (
 
     ##########################################
     (16:03:17) root | Input Config:
-    (16:03:17) root | 	Chrome driver path: C:\Users\user\Downloads\chromedriver_win32\chromedriver.exe
+    (16:03:17) root | 	Chrome driver path: /usr/local/bin/chromedriver
     (16:03:17) root | 	Stores List: ALL
     (16:03:17) root | 	Pickup/Delivery: DELIVERY
     (16:03:17) root | 	ICC Login: xxxx@gmail.com
@@ -128,8 +140,6 @@ This tool was created to help people who are at high risk and those needy ones (
     (16:03:38) root | Login succeeded
     (16:03:38) root | Starting new loop
     (16:04:38) root | FREMONT Delivery Slot : False
-    (16:04:38) root | SUNNYVALE Delivery Slot : True
-    (16:04:38) root | SAN JOSE Delivery Slot : False
     (16:04:40) root | Email notification succesfully sent
     (16:04:42) root | Connection ended
     ##########################################
@@ -137,7 +147,7 @@ This tool was created to help people who are at high risk and those needy ones (
 
 # Tested platforms:
 
-	Tested on Windows 10 and Ubuntu 16.04
+	Tested on MACOS , Ubuntu 16.04 and Windows 10
 	
 
 # Tested tool versions:
@@ -145,6 +155,7 @@ This tool was created to help people who are at high risk and those needy ones (
 	Google Chrome 81.0.4044.92
 	Chromedriver v81.0.4044.92
 	selenium v3.141.0		
+	
 	
 # Known Issues:
 
@@ -158,3 +169,9 @@ This tool was created to help people who are at high risk and those needy ones (
 	Script may take longer time find slots as I don't have any control over India cash and carry slot availbality logic.
 
 	This tools is for personnal-noncommercial use only.
+
+
+# Feedback:
+
+	For feedback, feature support, bugs, please reach me out at - crn.prasanna@gmail.com
+
